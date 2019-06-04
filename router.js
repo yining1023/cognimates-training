@@ -79,10 +79,9 @@ router.get("/vision/extension/:apikey/:modelid", (req, res) => {
 });
 
 //begin doodle routes
-router.get('/doodle', (req, res) => {
-  res.render('models/doodle/doodle', {
-      title: 'Cognimates, Doodle Model',
-      layout: 'doodle'
+router.get('/doodle_home', (req, res) => {
+  res.render('models/doodle/doodle_classifiers', {
+      title: 'Cognimates, Train a doodle model, Home'
     })
 })
 

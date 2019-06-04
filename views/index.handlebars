@@ -63,13 +63,14 @@
 		</div>
 
 
-		{{!-- <div class="classifiers__card-wrapper col-12 col-md-6">
+		<div class="classifiers__card-wrapper col-12 col-md-6">
 			<div class="card classifiers__card">
 				<img src="/images/doodle_banner.png"
 					class="js-classifiers__card--doodle
-							card-img-top 
+							card-img-top
 							classifiers__card-image"
-					alt="Train a Text Classifier">
+					alt="Train a Doodle Classifier">
+
 				<div class="card-body classifiers__card-body">
 					<button class="js-classifiers__card--doodle
 									btn
@@ -79,8 +80,17 @@
 						Train Doodle
 					</button>
 				</div>
+
+				<ul class="list-group list-group-flush">
+					<li class="list-group-item text-center">
+						<a class="button--view-guide"
+							href="https://docs.google.com/document/d/1owZxciBFD9UWaPBfDKoXK9DaBejm5aSNlP_Wl0RmMIE/view">
+							Getting Started Guide
+						</a>
+					</li>
+				</ul>
 			</div>
-		</div> --}}
+		</div>
 	</div>
 </div>
 
@@ -102,7 +112,7 @@
 
 		$(".js-classifiers__card--doodle").click(function(evt) {
 			evt.preventDefault();
-			window.location.href = "/doodle";
+			window.location.href = "/doodle_home";
 			return false;
 		});
 	});

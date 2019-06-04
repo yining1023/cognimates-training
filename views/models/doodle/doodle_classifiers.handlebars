@@ -1,0 +1,237 @@
+{{!-- <div class="doodle">
+  <h1>Doodle Classifier on 100 classes from Quickdraw dataset</h1>
+  <button class="doodle__button" id="guess">guess</button>
+  <button class="doodle__button" id="clear">clear</button>
+  <div id="canvasContainer"></div>
+  <h2 id="res"></h2>
+  <p>
+    A list of object it can guess:
+    'laptop', 'rainbow', 'baseball_bat', 'ice_cream', 'flower', 'suitcase', 'tree', 'microphone', 'sword', 'helmet',
+    'apple', 'umbrella', 'frying_pan', 'envelope', 'triangle', 'alarm_clock', 'paper_clip', 'light_bulb', 'scissors',
+    'cat', 't-shirt', 'ceiling_fan', 'key', 'mountain', 'table', 'moon', 'smiley_face', 'car', 'spoon', 'bird', 'saw',
+    'traffic_light', 'knife', 'wristwatch', 'shovel', 'circle', 'face', 'bridge', 'camera', 'bread', 'screwdriver',
+    'tennis_racquet', 'cell_phone', 'airplane', 'bed', 'baseball', 'moustache', 'candle', 'tooth', 'star', 'sock',
+    'dumbbell', 'lollipop', 'bicycle', 'hat', 'spider', 'clock', 'shorts', 'anvil', 'pants', 'syringe', 'ladder', 'axe',
+    'headphones', 'grapes', 'square', 'chair', 'coffee_cup', 'lightning', 'cookie', 'wheel', 'pencil', 'cloud',
+    'mushroom', 'door', 'drums', 'fan', 'bench', 'sun', 'stop_sign', 'eye', 'beard', 'radio', 'snake', 'line',
+    'power_outlet', 'diving_board', 'rifle', 'eyeglasses', 'broom', 'donut', 'pillow', 'hot_dog', 'butterfly', 'hammer',
+    'basketball', 'book', 'tent', 'pizza', 'cup'
+  </p>
+</div> --}}
+
+{{> header }}
+
+<div class="classifier__banner-image-container
+            classifier__banner-image-container--doodle ">
+  <img src="/images/doodle_banner.png"
+        class="js-classifiers__card--image classifier__banner-image
+            card-img-top
+            classifiers__card-image"
+        alt="Train a Doodle Classifier">
+</div>
+
+<ul class="nav
+          nav-tabs
+          classifier__nav-tabs"
+    id="classifier__tabs"
+    role="tablist">
+
+  <li class="nav-item classifier__nav-item">
+    <a class="js--nav__tab--create nav-link classifier__nav-link active"
+      data-toggle="tab"
+      href="#home"
+      role="tab"
+      aria-controls="home"
+      aria-selected="true">
+        <h2>
+          <i class="fas fa-plus"></i>
+          Create
+          Model
+        </h2>
+    </a>
+  </li>
+
+  <li class="nav-item classifier__nav-item--or">
+    <h2>
+      &mdash; or  &mdash;
+    </h2>
+  </li>
+</ul>
+
+<div class="tab-content " id="myTabContent" class="classifier__tabs">
+  <div class="js--classifier__tab--create tab-pane classifier__tab fade show active"
+      role="tabpanel"
+      aria-labelledby="home-tab">
+    {{> doodle__create }}
+  </div>
+</div>
+
+{{> footer }}
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/0.8.0/p5.min.js"></script>
+<script>
+    $(function() {
+      // set up page tabs
+      $('#classifier__tabs a').on('click', function (e) {
+        e.preventDefault()
+      })
+
+      $('.js--nav__tab--create').on('click', function (e) {
+          showCreateTab(true);
+      });
+
+      function showCreateTab(show) {
+          const tabContent = $('.js--classifier__tab--create');
+          if (show) {
+              tabContent.addClass('show active');
+              tabContent.show();
+              tabContent.attr('style', '')
+          } else {
+              tabContent.removeClass('show active');
+              tabContent.hide();
+              tabContent.attr('style', 'display:none !important');
+          }
+      }
+    });
+
+    $(document).ready(function init() {
+
+      window.labels = [];
+      window.dropZoneMap = {};
+
+      $('form').submit(false);
+
+      $('#input_projectName').keypress(function (e) {
+          if (e.which == 13) {
+              $('.js--project--name__button').trigger('click');
+              e.preventDefault();
+              return false;
+          }
+      });
+
+      $('.js--project--name__button').click(function (e) {
+          if ($('#input_projectName').val().length == 0) return;
+          const name = $('#input_projectName').val().trim();
+
+          if (name.length == 0) {
+              showWarningNotification('Project name cannot be empty', true, false);
+              return;
+          }
+
+          var format = /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/;
+          if (format.test(name) != false) {
+              showWarningNotification('Project name should have only letters and numbers.', true, false);
+              return;
+          }
+
+          $('.js--project-name__value--set').html(name);
+          $('.project-name__result-row').show();
+          window.projectName = name;
+          $('.project-name__form').hide();
+          showSuccessNotification('Project name set', false , false);
+      });
+
+      $('.project-name__remove-button').click(function (e) {
+          window.projectName = undefined;
+          $('#input_projectName').val('');
+          $('.project-name__result-row').hide();
+          $('.project-name__form').show();
+          showWarningNotification('Project name unset', true, false);
+      })
+
+      $('#button_categoryName').click(function () {
+        if ($('#input_categoryName').val() == '') {
+          showWarningNotification('Enter a category name.', true, false);
+          return;
+        }
+
+        var format = /[ !@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/;
+        var categoryName = $('#input_categoryName').val();
+        categoryName = categoryName.trim();
+        if (format.test(categoryName) != false) {
+            showWarningNotification('Category name should have only letters and numbers.', true, false);
+            return;
+        }
+        if (window.labels.includes(categoryName)) {
+          showWarningNotification('A category with this name already exists. Enter a different name.', true, false);
+          return;
+        }
+        window.labels.push(categoryName);
+        createCategoryHTMLElement(categoryName);
+        $('#input_categoryName').val('');
+      });
+
+      $('.js--classifier__predict__button').on('click', function () {
+          preprocessPredictData();
+      })
+    });
+
+    function createCategoryHTMLElement(categoryName) {
+        const htmlStructure = `<div class="category__container>
+            <div class="category__name">
+                ${categoryName}
+            </div>
+            <button>Add doodle to ${categoryName}</button>
+        </div>`;
+        const htmlElement = $(htmlStructure);
+        const categoriesContainerElement = $('#categoriesContainer');
+        categoriesContainerElement.append(htmlElement);
+    }
+
+    async function preprocessPredictData() {
+        $('.js--classifier__predict__button').attr('disabled', '');
+        $('.js--classifier__predict-results__name').hide();
+        $('.js--classifier__predict-results__status_spinner').show();
+        try {
+            validatePredictionData();
+            const predictionURL = $('.js--classifier__predict-url').val();
+            var results = undefined;
+            if (predictionURL.length == 0) {
+                await loadPredictionImage();
+                results = await classify(window.model_id);
+            } else {
+                results = await classifyByURL(window.model_id, predictionURL);
+            }
+            showClassification(results, true);
+            $('.js--classifier__predict-url').val('');
+        } catch (error) {
+            showErrorNotification(`Oops. ${error.message}`, true, true);
+            $('.js--classifier__predict__button').attr('disabled', null);
+            $('.js--classifier__predict-results__status_spinner').hide();
+            console.log(error);
+        }
+    }
+
+    function showClassification(response, createTab) {
+        var resultLabel;
+        var resultConfidence;
+        if(response.length == 1) {
+            resultLabel = response[0].class;
+            resultConfidence = response[0].score;
+        } else {
+            var classes = {}
+            var scores = []
+            for(var idx = 0; idx < response.length; idx++) {
+                let score = response[idx].score
+                let className = response[idx].class
+                classes[score] = className
+                scores.push(score)
+            }
+            scores.sort(function(a, b) {
+                return b - a;
+            })
+            resultConfidence = scores[0];
+            resultLabel = classes[resultConfidence];
+        }
+        resultConfidence = resultConfidence * 100;
+        resultConfidence = resultConfidence.toFixed(2);
+        if (createTab) {
+              $('.js--classifier__predict__button').attr('disabled', null);
+              $('.js--classifier__results--category').html(resultLabel);
+              $('.js--classifier__results--confidence').html(`${resultConfidence}%`);
+              $('.js--classifier__predict-results__name').show();
+              $('.js--classifier__predict-results__status_spinner').hide();
+        }
+    }
+
+</script>
